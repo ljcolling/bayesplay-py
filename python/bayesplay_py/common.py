@@ -4,11 +4,6 @@ from pydantic import BaseModel, model_serializer
 from pydantic.dataclasses import dataclass
 
 
-class Definition:
-    def initialise_object(self):
-        if self._object is None:
-            self._object = self._initialisation_func(self._interface.model_dump())
-
 class Param(BaseModel):
     name: str
     value: float
@@ -18,8 +13,11 @@ class Param(BaseModel):
 class ParamList(UserList[Param]):
     data: list[Param]
 
-    def get(self, name: str) -> float:
-        return {item.name: item.value for item in self}.get(name)
+    def get(self, name: str) -> float | None:
+        params = {item.name: item.value for item in self}
+        if name not in params:
+            raise ValueError(f"Parameter {name} not found in parameter list.")
+        return params.get(name)
 
     @model_serializer
     def serialize_model(self) -> list[Param]:

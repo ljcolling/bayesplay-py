@@ -1,21 +1,25 @@
 from __future__ import annotations
-import typing
 from enum import Enum
-from typing import overload
+from typing import TYPE_CHECKING, Any, Callable, overload
 
 from pydantic import BaseModel
 
 import bayesplay_py._lib as _lib
-from .common import Definition, Param, ParamList
+from .common import Param, ParamList
 from .model import Model
 
-if typing.TYPE_CHECKING:
-    from .prior import PriorDefinition
+if TYPE_CHECKING:
+    from bayesplay_py._lib import PythonLikelihood
+    from .prior import Prior
 
 
 class LikelihoodFamily(str, Enum):
     normal = "normal"
     noncentral_d = "noncentral_d"
+    noncentral_d2 = "noncentral_d2"
+    noncentral_t = "noncentral_t"
+    student_t = "student_t"
+    binomial = "binomial"
 
 
 class LikelihoodInterface(BaseModel):
@@ -23,31 +27,60 @@ class LikelihoodInterface(BaseModel):
     params: ParamList
 
 
-class Likelihood(Definition):
+class Likelihood:
     _family: LikelihoodFamily
     _params: ParamList
-    _object: _lib.Likelihood | None
+    _object: PythonLikelihood
     _interface: LikelihoodInterface
-    _initialisation_func = _lib.init_likelihood
+    _initialisation_func: Callable[[dict[str, Any]], PythonLikelihood] = (
+        _lib.init_likelihood
+    )
 
-    def __init__(self, **kwargs):
-        self._family = kwargs.pop("family")
+    def __init__(self, family: LikelihoodFamily, **kwargs: float | None):
+        self._family = family
 
-        params = {n: v for n, v in kwargs.items()}
+        params: dict[str, float] = {
+            name: value for name, value in kwargs.items() if value is not None
+        }
         self._params = ParamList(
             [Param(name=name, value=value) for name, value in params.items()]
         )
 
         self._object = None
-        self._interface = LikelihoodInterface(family=self._family, params=self._params)
+        self._interface: LikelihoodInterface = LikelihoodInterface(
+            family=self._family, params=self._params
+        )
+
+    def initialise_object(self):
+        if self._object is None:
+            model_dump: dict[str, Any] = self._interface.model_dump()
+            self._object: PythonLikelihood = self._initialisation_func(model_dump)
 
     @staticmethod
     def normal(mean: float, se: float) -> Likelihood:
-        return Likelihood(family="normal", mean=mean, sd=se)
+        return Likelihood(family=LikelihoodFamily.normal, mean=mean, sd=se)
 
     @staticmethod
     def noncentral_d(d: float, n: float) -> Likelihood:
-        return Likelihood(family="noncentral_d", d=d, n=n)
+        return Likelihood(family=LikelihoodFamily.noncentral_d, d=d, n=n)
+
+    @staticmethod
+    def noncentral_d2(d: float, n1: float, n2: float) -> Likelihood:
+        return Likelihood(family=LikelihoodFamily.noncentral_d2, d=d, n1=n1, n2=n2)
+
+    @staticmethod
+    def noncentral_t(t: float, df: float) -> Likelihood:
+        return Likelihood(family=LikelihoodFamily.noncentral_t, t=t, df=df)
+
+    @staticmethod
+    def binomial(successes: float, trials: float) -> Likelihood:
+        return Likelihood(
+            family=LikelihoodFamily.binomial, successes=successes, trials=trials
+        )
+
+    @staticmethod
+    def student_t(mean: float, sd: float, df: float) -> Likelihood:
+        return Likelihood(family=LikelihoodFamily.student_t, mean=mean, sd=sd, df=df)
 
     @overload
     def __call__(self, x: float) -> float:
@@ -62,7 +95,7 @@ class Likelihood(Definition):
         """
 
     def __call__(self, x: float | list[float]) -> float | list[float]:
-        super().initialise_object()
+        self.initialise_object()
         return self.function(x)
 
     @overload
@@ -70,11 +103,11 @@ class Likelihood(Definition):
     @overload
     def function(self, x: list[float]) -> list[float]: ...
     def function(self, x: float | list[float]) -> float | list[float]:
-        super().initialise_object()
+        self.initialise_object()
         if isinstance(x, list):
             return self._object.function_vec(x)
         else:
             return self._object.function(x)
 
-    def __mul__(self, other: PriorDefinition):
+    def __mul__(self, other: Prior):
         return Model(self, other)

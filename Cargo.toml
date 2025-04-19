@@ -17,3 +17,8 @@ bayesplay = {git = "https://github.com/bayesplay/bayesplay-rs"}
 dict_derive = "0.6.0"
 serde_json = "1.0.140"
 anyhow = "1.0.97"
+
+[patch."https://github.com/bayesplay/bayesplay-rs"]
+bayesplay = { path = "../bayesplay/bayesplay/" }
+interface = {path = "../bayesplay/interface"}
+

@@ -6,21 +6,22 @@ from typing import overload
 import bayesplay_py._lib as _lib
 
 if typing.TYPE_CHECKING:
-    from .likelihood import LikelihoodDefinition
-    from .prior import PriorDefinition
+    from ._lib import PythonModel
+    from .likelihood import Likelihood
+    from .prior import Prior
 
 
 @dataclass
 class Evidence:
     evidence: float
-    likelihood: LikelihoodDefinition
-    null_prior: PriorDefinition
+    likelihood: Likelihood
+    null_prior: Prior
 
     @overload
-    def __truediv__(self, other: float | int) -> float | int: ...
+    def __truediv__(self, other: float | int) -> float: ...
 
     @overload
-    def __truediv__(self, other: Evidence) -> Evidence: ...
+    def __truediv__(self, other: Evidence) -> float: ...
 
     def __truediv__(self, other: Evidence | float | int) -> float:
         if isinstance(other, Evidence):
@@ -29,11 +30,9 @@ class Evidence:
                     "Likelihoods must be the same to divide Evidence objects."
                 )
             return self.evidence / other.evidence
-        if isinstance(other, (float, int)):
-            if other == 1:
-                return self.evidence / other
-            raise ValueError("Divide by 1 to invert the model comparison.")
-        raise ValueError(f"Cannot divide Evidence by {type(other)}")
+        if other == 1:
+            return self.evidence / other
+        raise ValueError("Divide by 1 to invert the model comparison.")
 
     def __repr__(self):
         return self.__str__()
@@ -43,9 +42,9 @@ class Evidence:
 
 
 class Posterior:
-    def __init__(self, likelihood: LikelihoodDefinition, prior: PriorDefinition):
-        self._likelihood = likelihood
-        self._prior = prior
+    def __init__(self, likelihood: Likelihood, prior: Prior):
+        self._likelihood: Likelihood = likelihood
+        self._prior: Prior = prior
         self._posterior_obj = None
 
     @overload
@@ -57,7 +56,7 @@ class Posterior:
         if self._posterior_obj is None:
             self._posterior_obj = _lib.init_posterior(
                 self._likelihood._interface.model_dump(),
-                self._prior._prior_interface.model_dump(),
+                self._prior._interface.model_dump(),
             )
         return self.function(x)
 
@@ -71,7 +70,7 @@ class Posterior:
         if self._posterior_obj is None:
             self._posterior_obj = _lib.init_posterior(
                 self._likelihood._interface.model_dump(),
-                self._prior._prior_interface.model_dump(),
+                self._prior._interface.model_dump(),
             )
         return self._posterior_obj.integrate(lb, ub)
 
@@ -83,7 +82,7 @@ class Posterior:
         if self._posterior_obj is None:
             self._posterior_obj = _lib.init_posterior(
                 self._likelihood._interface.model_dump(),
-                self._prior._prior_interface.model_dump(),
+                self._prior._interface.model_dump(),
             )
         if isinstance(x, list):
             return self._posterior_obj.function_vec(x)
@@ -92,17 +91,17 @@ class Posterior:
 
 
 class Model:
-    def __init__(self, likelihood: LikelihoodDefinition, prior: PriorDefinition):
-        self._likelihood = likelihood
-        self._prior = prior
-        self._model_obj = None
+    def __init__(self, likelihood: Likelihood, prior: Prior):
+        self._likelihood: Likelihood = likelihood
+        self._prior: Prior = prior
+        self._model_obj: PythonModel = None
 
     @property
-    def likelihood(self) -> LikelihoodDefinition:
+    def likelihood(self) -> Likelihood:
         return self._likelihood
 
     @property
-    def prior(self) -> PriorDefinition:
+    def prior(self) -> Prior:
         return self._prior
 
     def integrate(self) -> Evidence:

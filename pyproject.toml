@@ -20,3 +20,8 @@ dependencies = [
 features = ["pyo3/extension-module"]
 python-source = "python"
 module-name = "bayesplay_py._lib"
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.29.0",
+]
