@@ -1,5 +1,14 @@
 
 
+## Installation
+
+**Bayesplay-py** is not yet available on PyPI, but you can grab a
+prebuilt wheel from the releases page. You can install it with pip:
+
+``` bash
+pip install bayesplay_py-0.2.0-cp311-cp311-macosx_11_0_arm64.whl
+```
+
 ## Bayesplay-py
 
 **bayespaly-py** is a Python version of the [Bayesplay R
@@ -41,7 +50,7 @@ centred at 0. We can specify this with the `Prior` class and the
 `Prior.point` constructor. We’ll set the `point` value to 0.
 
 ``` python
-h0_prior = Prior.point( point = 0)
+h0_prior = Prior.point(point=0)
 ```
 
 Next, Dienes & Mclatchie (2018) describe the alternative model. For this
@@ -53,7 +62,7 @@ we’ll truncate the prior by setting the lower limit of the distribution
 (`ll`) to 0.
 
 ``` python
-h1_prior = Prior.normal(mean = 0, sd = 13.3, ll = 0)
+h1_prior = Prior.normal(mean=0, sd=13.3, ll=0)
 ```
 
 With the three parts specified we can compute the Bayes factor. The
