@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, List, Optional, Union, overload
 
 import bayesplay_py._lib as _lib
 
@@ -17,12 +17,12 @@ class Evidence:
     null_prior: Prior
 
     @overload
-    def __truediv__(self, other: float | int) -> float: ...
+    def __truediv__(self, other: Union[float, int]) -> float: ...
 
     @overload
     def __truediv__(self, other: Evidence) -> float: ...
 
-    def __truediv__(self, other: Evidence | float | int) -> float:
+    def __truediv__(self, other: Union[Evidence, float, int]) -> float:
         if isinstance(other, Evidence):
             if other.likelihood != self.likelihood:
                 raise ValueError(
@@ -52,25 +52,29 @@ class Posterior:
     @overload
     def __call__(self, x: float) -> float: ...
     @overload
-    def __call__(self, x: list[float]) -> list[float]: ...
+    def __call__(self, x: List[float]) -> List[float]: ...
 
-    def __call__(self, x: float | list[float]) -> float | list[float]:
+    def __call__(self, x: Union[float, List[float]]) -> Union[float, List[float]]:
         return self.function(x)
 
     @overload
     def integrate(self) -> float: ...
 
     @overload
-    def integrate(self, lb: float | None = None, ub: float | None = None) -> float: ...
+    def integrate(
+        self, lb: Optional[float] = None, ub: Optional[float] = None
+    ) -> float: ...
 
-    def integrate(self, lb: float | None = None, ub: float | None = None) -> float:
+    def integrate(
+        self, lb: Optional[float] = None, ub: Optional[float] = None
+    ) -> float:
         return self._posterior_obj.integrate(lb, ub)
 
     @overload
     def function(self, x: float) -> float: ...
     @overload
-    def function(self, x: list[float]) -> list[float]: ...
-    def function(self, x: float | list[float]) -> float | list[float]:
+    def function(self, x: List[float]) -> List[float]: ...
+    def function(self, x: Union[float, List[float]]) -> Union[float, List[float]]:
         if isinstance(x, list):
             return self._posterior_obj.function_vec(x)
         else:

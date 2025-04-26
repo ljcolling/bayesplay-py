@@ -13,7 +13,6 @@ class PythonLikelihood:
 
 class PythonModel:
     def integral(self) -> float: ...
-
     @property
     def posterior(self) -> PythonPosterior: ...
 

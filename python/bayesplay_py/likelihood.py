@@ -1,11 +1,10 @@
 from __future__ import annotations
+from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable, overload
-
-from pydantic import BaseModel
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union, overload
 
 import bayesplay_py._lib as _lib
-from .common import Param, ParamList
+from .common import Interface, Param, ParamList
 
 if TYPE_CHECKING:
     from ._lib import PythonLikelihood
@@ -21,17 +20,18 @@ class LikelihoodFamily(str, Enum):
     binomial = "binomial"
 
 
-class LikelihoodInterface(BaseModel):
+@dataclass
+class LikelihoodInterface(Interface[LikelihoodFamily]):
     family: LikelihoodFamily
     params: ParamList
 
 
 class Likelihood:
-    _initialisation_func: Callable[[dict[str, Any]], PythonLikelihood] = (
+    _initialisation_func: Callable[[Dict[str, Any]], PythonLikelihood] = (
         _lib.init_likelihood
     )
 
-    def __init__(self, family: LikelihoodFamily, **kwargs: float | None):
+    def __init__(self, family: LikelihoodFamily, **kwargs: Optional[float]):
         self._family = family
 
         params: dict[str, float] = {
@@ -73,19 +73,17 @@ class Likelihood:
 
     @overload
     def __call__(self, x: float) -> float: ...
-
     @overload
-    def __call__(self, x: list[float]) -> list[float]: ...
-
-    def __call__(self, x: float | list[float]) -> float | list[float]:
+    def __call__(self, x: List[float]) -> List[float]: ...
+    def __call__(self, x: Union[float, List[float]]) -> Union[float, List[float]]:
         return self.function(x)
 
     @overload
     def function(self, x: float) -> float: ...
     @overload
-    def function(self, x: list[float]) -> list[float]: ...
-    def function(self, x: float | list[float]) -> float | list[float]:
-        if isinstance(x, list):
+    def function(self, x: List[float]) -> List[float]: ...
+    def function(self, x: Union[float, List[float]]) -> Union[float, List[float]]:
+        if isinstance(x, List):
             return self._object.function_vec(x)
         else:
             return self._object.function(x)

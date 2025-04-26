@@ -52,12 +52,14 @@ def test_likelihood_function_noncentral_d():
     vals_call = likelihood([0.4, 0.6])
     assert all(abs(a - b) < 1e-12 for a, b in zip(vals, vals_call))
 
+
 def test_likelihood_function_noncentral_d2():
     likelihood = Likelihood.noncentral_d2(d=0.5, n1=20, n2=25)
     assert abs(likelihood.function(0.5) - likelihood(0.5)) < 1e-12
     vals = likelihood.function([0.4, 0.6])
     vals_call = likelihood([0.4, 0.6])
     assert all(abs(a - b) < 1e-12 for a, b in zip(vals, vals_call))
+
 
 def test_likelihood_function_noncentral_t():
     likelihood = Likelihood.noncentral_t(t=2.0, df=1.5)
@@ -66,12 +68,14 @@ def test_likelihood_function_noncentral_t():
     vals_call = likelihood([1.5, 2.5])
     assert all(abs(a - b) < 1e-12 for a, b in zip(vals, vals_call))
 
+
 def test_likelihood_function_student_t():
     likelihood = Likelihood.student_t(mean=0, sd=1, df=5)
     assert abs(likelihood.function(2.0) - likelihood(2.0)) < 1e-12
     vals = likelihood.function([1.5, 2.5])
     vals_call = likelihood([1.5, 2.5])
     assert all(abs(a - b) < 1e-12 for a, b in zip(vals, vals_call))
+
 
 def test_likelihood_function_binomial():
     likelihood = Likelihood.binomial(successes=5, trials=10)

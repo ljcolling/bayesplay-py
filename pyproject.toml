@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "bayesplay-py"
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
@@ -12,8 +12,6 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "pydantic>=2.10.6",
-    "pytest>=8.3.5",
 ]
 
 [tool.maturin]
@@ -24,13 +22,17 @@ module-name = "bayesplay_py._lib"
 [dependency-groups]
 dev = [
     "basedpyright>=1.29.0",
+    "maturin>=1.8.3",
+    "pytest>=8.3.5",
+    "ruff>=0.11.7",
 ]
 
 
 [tool.pyright]
 stubPath = "python/bayesplay_py"
 reportExplicitAny = "none"
-exclude = ["python/tests", ".venv"]
+exclude = ["python/tests", ".venv", "test*"]
 reportUnannotatedClassAttribute="none"
 reportPrivateUsage="none"
 reportImportCycles="none"
+reportImplicitOverride="none"
